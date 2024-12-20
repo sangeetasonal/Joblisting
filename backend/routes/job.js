@@ -16,7 +16,8 @@ router.get("/", async (req, res) => {
     if (name) {
         query.companyName = { $regex: name, $options: "i" };
     }
-    const jobs = await Job.find(query).skip(offset || 0).limit(limit || 10);
+    const jobs = await Job.find(query).skip(offset || 0).limit(limit || 50);
+    const count=await Job.countDocuments(query);//total no of docs
    //-get me jobs with salary btw 10000 and 120000
    // const jobs=await Job.find({salary:{$gte:2000,$lte:10000}}).skip(offset).limit(limit);
 
@@ -57,77 +58,83 @@ router.get("/:id", async (req, res) => {
     res.status(200).json(job);
 })
 
-
-
 router.delete("/:id", authMiddleware, async (req, res) => {
     const { id } = req.params;
+    const job = await Job.findById(id);
+    const userId = req.user.id;
 
-    try {
-        const job = await Job.findById(id);
-        if (!job) {
-            return res.status(404).json({ message: "Job not found" });
-        }
-
-        // Check if the user is authorized
-        const userId = req.user.id;
-        if (job.user.toString() !== userId) {
-            return res.status(403).json({ message: "You are not authorized to delete this job" });
-        }
-
-        // Delete the job
-        await Job.findByIdAndDelete(id);
-        res.status(200).json({ message: "Job deleted successfully" });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Error deleting job" });
+    if (!job) {
+        return res.status(404).json({ message: "Job not found" });
     }
-});
-
+    if (userId !== job.user.toString()) {   // check if the user is the owner of the job
+        return res.status(401).json({ message: "You are not authorized to delete this job" });
+    }
+    await Job.deleteOne({ _id: id });
+    res.status(200).json({ message: "Job deleted" });
+})
+//css,js,node,react
 router.post("/", authMiddleware, async (req, res) => {
-    const { companyName, jobPosition, salary, jobType } = req.body;
-    if (!companyName ||!jobPosition ||!salary ||!jobType) {
-        return res.status(400).json({ message: "All fields are required" });
+    const { companyName,logoUrl, jobPosition, salary, jobType,remoteOffice,
+        location,jobDescription,companyDescription,skills,information} = req.body;
+    if (!companyName || !logoUrl|| !jobPosition|| !salary|| !jobType|| !remoteOffice||
+        !location|| !jobDescription|| !companyDescription|| !skills||!information) {
+        return res.status(400).json({ message: "Missing required fields" });
     }
-    try{
-    const user = req.user;
-    const job = await Job.create({
-        companyName,
-        jobPosition,
-        salary,
-        jobType,
-        user: user.id,
-    });
-    res.status(200).json(job);
-} catch (err) {
-    console.error(err);
-     res.status(500).json({ message: "Error in creating jobs" });
-}
-   
+    const skillsArray=skills.split(",").map((skill)=>skill.trim());
+    try {
+        const user = req.user;
+        const job = await Job.create({
+            companyName,
+            logoUrl, 
+            jobPosition, 
+            salary, 
+            jobType,
+            remoteOffice,
+            location,
+            jobDescription,
+            companyDescription,
+            skills:skillsArray,
+            information,
+            user: user.id,
+        });
+        res.status(200).json(job);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Error in creating job" });
+    }
 
 })
 
 router.put("/:id", authMiddleware, async (req, res) => {
     const { id } = req.params;
-    const { companyName, jobPosition, salary, jobType } = req.body;
+    const { companyName,logoUrl, jobPosition, salary, jobType,remoteOffice,
+        location,jobDescription,companyDescription,skills,information} = req.body;
     const job = await Job.findById(id);
     if (!job) {
         return res.status(404).json({ message: "Job not found" });
     }
-    if (job.user.toString()!== req.user.id) {
-        return res.status(403).json({ message: "You are not authorized to update this job" });
+    if (job.user.toString() !== req.user.id) {   // check if the user is the owner of the job
+        return res.status(401).json({ message: "You are not authorized to update this job" });
     }
-    try{
+    try {
         await Job.findByIdAndUpdate(id, {
             companyName,
-            jobPosition,
-            salary,
+            logoUrl, 
+            jobPosition, 
+            salary, 
             jobType,
+            remoteOffice,
+            location,
+            jobDescription,
+            companyDescription,
+            skills,
+            information,
         });
-        res.status(200).json({ message: "Job updated successfully" });
-
+        res.status(200).json({ message: "Job updated" });
     } catch (err) {
-        console.error(err);
+        console.log(err);
         res.status(500).json({ message: "Error in updating job" });
     }
-});
+})
+
 module.exports = router;

@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { login } from '../services';
 import {  useNavigate } from 'react-router-dom';
 
 function LoginForm() {
-    if (localStorage.getItem('token')){
-        alert('already logged in')
-        navigate('/home')
-    }
-
+   
+useEffect (() => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    navigate('/home')
+  } 
+} ,[])
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -19,7 +21,8 @@ function LoginForm() {
     e.preventDefault();
     const res = await login(formData);
     if (res.status === 200) {
-        localStorage.setItem('token', res.token);
+      const data = await res.json()
+        localStorage.setItem('token', data.token);
       alert('Logged in successfully');
       navigate('/home')
     } else {

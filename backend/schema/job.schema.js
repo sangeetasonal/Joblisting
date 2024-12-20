@@ -2,25 +2,52 @@ const mongoose = require("mongoose");
 const jobSchema = new mongoose.Schema({
     companyName: {
         type: String,
-        required: true
+        required: true,
     },
+   
     jobPosition: {
         type: String,
         required: true,
     },
     salary: {
         type: Number,
-        required: true
+        required: true,
     },
     jobType: {
         type: String,
         required: true,
-        enum: ["Full-time", "Part-time", "Contract", "internship", "freelance"]
+        enum: ["full-time", "part-time", "contract", "internship", "freelance"],  //enum to select one of five
+    },
+    remoteOffice: {
+        type: String,
+        enum: ["work from home", "5-day-office", "hybrid"],  //enum to select one of five
+    },
+    location: {
+        type: String,
+       
+    },
+    jobDescription: {
+        type: String,
+        
+    },
+    companyDescription: {
+        type: String,
+        
+    },
+    skills: {
+        type: Array,
+        required: true,
+        
+    },
+    information: {
+        type: String,
+        
+        
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true
+        required: true,
     }
 
 });
