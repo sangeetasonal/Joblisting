@@ -7,6 +7,16 @@ dotenv.config();
 
 router.get("/", async (req, res) => {
     const {limit,offset,salary,name} = req.query;
+    // mongodb query
+    const query = {};
+    if (salary) {
+        query.salary = { $gte: salary, $lte: salary};
+
+    }
+    if (name) {
+        query.companyName = { $regex: name, $options: "i" };
+    }
+    const jobs = await Job.find(query).skip(offset || 0).limit(limit || 10);
    //-get me jobs with salary btw 10000 and 120000
    // const jobs=await Job.find({salary:{$gte:2000,$lte:10000}}).skip(offset).limit(limit);
 
@@ -34,7 +44,7 @@ router.get("/", async (req, res) => {
     //  jobType: { $regex: type, $options: "i" } }).skip(offset).limit(limit);
     // const jobs = await Job.find().skip(offset).limit(limit);
 
-    
+    // const jobs = await Job.find().skip(offset || 0).limit(limit || 10 );
     res.status(200).json(jobs);
 })
 
